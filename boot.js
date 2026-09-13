@@ -1,6 +1,6 @@
 // Resolve the release before loading app code. Deployment versions also bust module imports.
 async function release(){const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store',signal:AbortSignal.timeout(8000)});if(!r.ok)throw Error();const v=(await r.json()).version;if(typeof v!=='string'||!/^[a-zA-Z0-9_-]{1,80}$/.test(v))throw Error();return v;}
-let loaded;try{loaded=await release()}catch{loaded='multi1'}
+let loaded;try{loaded=await release()}catch{loaded='builder1'}
 await import('./app.js?v='+loaded);
 let lastEdit=0,checking=false;
 document.addEventListener('input',()=>lastEdit=Date.now());

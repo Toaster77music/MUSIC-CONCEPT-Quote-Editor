@@ -36,3 +36,19 @@ test('plusieurs projets : alternatives non additionnées et mode cumulé explici
  const options=selectedOptions(s);assert.equal(options.length,2);assert.equal(combinedTotal(options),5900);assert.match(proposal(s,options),/Option 1 — Disco Fiesta/);assert.match(proposal(s,options),/Option 2 — Cloclo/);assert.doesNotMatch(proposal(s,options),/TOTAL GÉNÉRAL/);s.mode='cumulative';assert.match(proposal(s,options),/TOTAL GÉNÉRAL HT/);
  s.hotels['6:light3']='';assert.equal(combinedTotal(selectedOptions(s)),null);s.selections=[];assert.equal(selectedOptions(s).length,0);assert.equal(combinedTotal([]),null);
 });
+
+import {makeBlock,migrateBuilder,blockCost,switchFormula} from './builder.js';
+test('frais indépendants : voitures, camion et location ne se confondent pas',()=>{
+ const r={seats:3,kmRate:.6,tolls:0,meal:0,hotel:0,deposit:30};const p=migrateCatalog(initialCatalog)[6];const a=makeBlock(p,r,'a'),b=makeBlock(p,r,'b');
+ a.fees={...a.fees,cars:2,trucks:1,truckRental:200,truckKmRate:.3,truckTolls:20,meal:10,hotel:100};
+ const c=blockCost(a,{km:'100'},r);assert.equal(c.carCost,240);assert.equal(c.truckCost,280);assert.equal(c.meals,110);assert.equal(c.total,5130);assert.equal(b.fees.trucks,0);
+ switchFormula(a,p,'light3');a.fees.cars=0;a.fees.trucks=2;switchFormula(a,p,'full');assert.equal(a.fees.cars,2);assert.equal(a.fees.trucks,1);
+});
+test('blocs répétés, quatre lignes et informations communes une seule fois',()=>{
+ const r={seats:3,kmRate:.6,tolls:0,meal:0,hotel:0,deposit:30};const s=migrateBuilder(migrateSelections({projects:migrateCatalog(initialCatalog),selections:['6:full','3:full'],r,d:{km:'0',client:'Test Client',place:'Lieu Test',constraints:'Accès camion limité'}}));
+ s.blocks.push({...structuredClone(s.blocks[0]),uid:'duplicate'});assert.equal(selectedOptions(s).length,3);
+ s.blocks[0].show.travel=false;s.commonShow.client=false;
+ const text=proposal(s,selectedOptions(s));assert.equal(text.split('Lieu Test').length-1,1);assert.equal(text.split('Accès camion limité').length-1,1);assert.doesNotMatch(text,/Test Client/);
+ const name=text.indexOf('Option 1 —');assert.deepEqual(text.slice(name).split('\n').slice(1,5),s.blocks[0].lines);
+ s.blocks=[];assert.equal(selectedOptions(s).length,0);
+});

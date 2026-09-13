@@ -24,7 +24,7 @@ jobs:
       - run: npm test
       - run: |
           mkdir public
-          cp index.html style.css boot.js app.js core.js catalog.js quote.js public/
+          cp index.html style.css boot.js app.js core.js catalog.js quote.js builder.js public/
           python3 - <<'PYDEPLOY'
           import os, pathlib, re, json
           version = os.environ['GITHUB_SHA']
