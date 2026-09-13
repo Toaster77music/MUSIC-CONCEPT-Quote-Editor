@@ -30,3 +30,8 @@ Le workflow teste et déploie à chaque push sur main. Dans Settings > Pages, ch
 
 ## Suite possible
 Extraction IA côté serveur avec validation structurée, gestion multi-formules, tarif par paliers, disponibilité artistes, devis numéroté/PDF, historique de devis et comptes utilisateurs. Ne jamais placer une clé API dans le navigateur.
+
+## Tarifs tribute (fournis par Music Concept)
+10 formules : Cloclo (4), Disco Fiesta (1), Circus (2), Sonic Drift (3). Sélection de la formule dans le devis ; chaque tarif, composition, durée et effectif est modifiable dans le catalogue. Les effectifs Cloclo incluent le sosie (11/9/5/3).
+Les tarifs artistiques sont HT hors VHR. Voyage et restauration sont calculés séparément ; l’hébergement est un montant global HT à saisir explicitement (0 si inutile ou pris en charge). Le total reste incomplet tant que l’hébergement ou la distance manque. Les conditions techniques sont reprises dans le mail.
+Les sauvegardes locales antérieures reçoivent les formules automatiquement sans effacer les réglages : un ancien tarif personnalisé devient une formule supplémentaire conservée. L’import JSON accepte les anciennes sauvegardes et les formules de cette version.

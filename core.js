@@ -12,6 +12,7 @@ export function calculate(p,d,r){
  const km=d.km===''?null:Number(d.km);
  const travel=km===null?null:Math.round((km*2*cars*Number(r.kmRate)+Number(r.tolls)*cars+Number(r.meal)*artists)*100)/100;
  const fee=p.base===''?null:Math.round((Number(p.base)+(Number(p.perArtist)||0)*artists+(Number(p.perPerson)||0)*(Number(d.participants)||0))*100)/100;
- const total=fee===null||travel===null?null:Math.round((fee+travel)*100)/100;
+ const hotel=p.formulaName?(r.hotel===''||r.hotel===undefined?null:Number(r.hotel)):0;
+ const total=fee===null||travel===null||hotel===null?null:Math.round((fee+travel+hotel)*100)/100;
  return {artists,cars,travel,fee,total,deposit:total===null?null:Math.round(total*Number(r.deposit))/100};
 }
