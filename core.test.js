@@ -26,3 +26,13 @@ test('changement de formule Cloclo modifie durée, tarif et transport',()=>{
  assert.equal(f.duration,'1h');assert.equal(f.base,2000);assert.equal(f.artists,3);
  assert.equal(calculate(f,{km:0},{seats:3,kmRate:.6,tolls:0,meal:0,hotel:0,deposit:30}).total,2000);
 });
+
+import {migrateSelections,selectedOptions,combinedTotal,proposal} from './quote.js';
+test('sélection multiple sans doublons et migration de la formule précédente',()=>{
+ const s={projects:migrateCatalog(initialCatalog),project:'6',r:{hotel:0}};migrateSelections(s);assert.deepEqual(s.selections,['6:full']);s.selections=['6:full','6:full','6:light3','3:full'];migrateSelections(s);assert.equal(s.selections.length,3);
+});
+test('plusieurs projets : alternatives non additionnées et mode cumulé explicite',()=>{
+ const s=migrateSelections({projects:migrateCatalog(initialCatalog),selections:['6:light3','3:full'],mode:'alternatives',r:{seats:3,kmRate:.6,tolls:0,meal:0,hotel:0,deposit:30},d:{km:'0'},hotels:{}});
+ const options=selectedOptions(s);assert.equal(options.length,2);assert.equal(combinedTotal(options),5900);assert.match(proposal(s,options),/Option 1 — Disco Fiesta/);assert.match(proposal(s,options),/Option 2 — Cloclo/);assert.doesNotMatch(proposal(s,options),/TOTAL GÉNÉRAL/);s.mode='cumulative';assert.match(proposal(s,options),/TOTAL GÉNÉRAL HT/);
+ s.hotels['6:light3']='';assert.equal(combinedTotal(selectedOptions(s)),null);s.selections=[];assert.equal(selectedOptions(s).length,0);assert.equal(combinedTotal([]),null);
+});

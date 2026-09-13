@@ -22,7 +22,17 @@ jobs:
         with:
           node-version: 24
       - run: npm test
-      - run: mkdir public && cp index.html style.css app.js core.js catalog.js public/
+      - run: |
+          mkdir public
+          cp index.html style.css boot.js app.js core.js catalog.js quote.js public/
+          python3 - <<'PYDEPLOY'
+          import os, pathlib, re, json
+          version = os.environ['GITHUB_SHA']
+          for path in pathlib.Path('public').glob('*'):
+              if path.suffix in ('.html', '.js'):
+                  path.write_text(re.sub(r'([?&]v=)[A-Za-z0-9_-]+', lambda m: m[1]+version, path.read_text()))
+          pathlib.Path('public/version.json').write_text(json.dumps({'version': version}))
+          PYDEPLOY
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
