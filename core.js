@@ -16,3 +16,16 @@ export function calculate(p,d,r){
  const total=fee===null||travel===null||hotel===null?null:Math.round((fee+travel+hotel)*100)/100;
  return {artists,cars,travel,fee,total,deposit:total===null?null:Math.round(total*Number(r.deposit))/100};
 }
+
+export function validTechnicalSheet(f){
+ return !!f&&typeof f.name==='string'&&/\.pdf$/i.test(f.name)&&Number.isInteger(f.size)&&f.size>0&&f.size<=2*1024*1024&&typeof f.data==='string'&&f.data.length<=2800000&&/^[A-Za-z0-9+/]*={0,2}$/.test(f.data)&&f.data.startsWith('JVBERi0');
+}
+export function buildEml(subject,body,to,files=[]){
+ const encode=s=>btoa(Array.from(new TextEncoder().encode(s),b=>String.fromCharCode(b)).join(''));
+ const wrap=s=>s.match(/.{1,76}/g)?.join('\r\n')||'';
+ const boundary='mc_'+crypto.randomUUID();
+ const safeTo=/^[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+$/.test(to||'')?to:'';
+ const lines=['X-Unsent: 1','MIME-Version: 1.0',...(safeTo?['To: '+safeTo]:[]),'Subject: =?UTF-8?B?'+encode(subject.replace(/[\r\n]/g,' '))+'?=','Content-Type: multipart/mixed; boundary="'+boundary+'"','','--'+boundary,'Content-Type: text/plain; charset=UTF-8','Content-Transfer-Encoding: base64','',wrap(encode(body))];
+ for(const f of files){if(!validTechnicalSheet(f))throw Error('Fiche technique invalide');const name=encodeURIComponent(f.name).replace(/'/g,'%27');lines.push('--'+boundary,'Content-Type: application/pdf',"Content-Disposition: attachment; filename=\"fiche-technique.pdf\"; filename*=UTF-8''"+name,'Content-Transfer-Encoding: base64','',wrap(f.data));}
+ lines.push('--'+boundary+'--','');return lines.join('\r\n');
+}
