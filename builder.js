@@ -1,4 +1,4 @@
-import {effectiveProject} from './catalog.js?v=builder1';
+import {effectiveProject,updateSeptemberRate} from './catalog.js?v=builder1';
 import {calculate} from './core.js?v=builder1';
 export const displayDefaults={duration:true,includes:true,artists:false,fee:true,travel:false,total:true,deposit:true,conditions:true,videos:true};
 export const commonLabels={client:'Contact',company:'Client / société',email:'E-mail',phone:'Téléphone',date:'Date(s)',place:'Lieu',duration:'Horaires / durée demandés',participants:'Participants',context:'Contexte',constraints:'Contraintes'};
@@ -20,7 +20,7 @@ export function presentation(p){return [...(lines[p.id]||[p.description||'Prése
 export function makeBlock(p,r,uid){return {uid,projectId:p.id,name:p.name,formulaId:p.selectedFormula||p.formulas?.[0]?.id||'',p:structuredClone(effectiveProject(p)),commercialText:p.description,lines:presentation(p),show:{...displayDefaults},fees:{cars:'',seats:r.seats,kmRate:r.kmRate,tolls:r.tolls,meal:r.meal,hotel:p.formulas?r.hotel??'':0,trucks:0,truckRental:0,truckKmRate:0,truckTolls:0},configurations:{}};}
 export function migrateBuilder(s){
  if(!Array.isArray(s.blocks))s.blocks=s.projects.flatMap(p=>(p.formulas||[null]).flatMap(f=>{const key=p.id+':'+(f?.id||'');if(!s.selections?.includes(key))return [];const b=makeBlock(f?{...p,selectedFormula:f.id}:p,s.r,'legacy-'+key);b.fees.hotel=s.hotels?.[key]??b.fees.hotel;return [b];}));
- for(const b of s.blocks){if(typeof b.commercialText!=='string'){const original=presentation({id:b.projectId,description:b.p?.description});const unchanged=JSON.stringify(b.lines)===JSON.stringify(original);b.commercialText=unchanged?(s.projects.find(p=>p.id===b.projectId)?.description||b.p?.description||''):(b.lines||[]).join('\n');}}
+ for(const b of s.blocks){if(b.p){const upgraded=updateSeptemberRate(b.projectId,{...b.p,id:b.formulaId});b.p={...upgraded,id:b.p.id};}for(const [id,config] of Object.entries(b.configurations||{})){if(config.p){const upgraded=updateSeptemberRate(b.projectId,{...config.p,id});config.p={...upgraded,id:config.p.id};}}if(typeof b.commercialText!=='string'){const original=presentation({id:b.projectId,description:b.p?.description});const unchanged=JSON.stringify(b.lines)===JSON.stringify(original);b.commercialText=unchanged?(s.projects.find(p=>p.id===b.projectId)?.description||b.p?.description||''):(b.lines||[]).join('\n');}}
  s.commonShow={...Object.fromEntries(Object.keys(commonLabels).map(k=>[k,true])),...s.commonShow};s.d.constraints??='';return s;
 }
 export function switchFormula(b,project,id){

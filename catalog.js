@@ -23,20 +23,25 @@ export const tributeFormulas={
  formula('middle','Middle Line Up',9,3900,'1h15','Basse / Batterie / Guitare / Clavier / 2 choristes / 2 danseuses / Sosie de Cloclo'),
  formula('light5','Light Line Up – 5',5,2600,'1h','4 danseuses / Sosie de Cloclo'),
  formula('light3','Light Line Up – 3',3,2000,'1h','2 danseuses / Sosie de Cloclo')],
- '3':[formula('full','Full Line Up',8,3900,'1h15','Basse / Batterie / Guitare / Clavier / Chanteur / Chanteuse / 2 danseuses')],
+ '3':[formula('full','Full Line Up',8,3700,'1h15','Basse / Batterie / Guitare / Clavier / Chanteur / Chanteuse / 2 danseuses')],
  '5':[
- formula('full','Full Line Up',8,3900,'1h15','Basse / Batterie / Guitare / Clavier / Chanteur / Saxophone / Trompette / Trombone'),
+ formula('full','Full Line Up',8,3700,'1h15','Basse / Batterie / Guitare / Clavier / Chanteur / Saxophone / Trompette / Trombone'),
  formula('light','Light Line Up',5,2600,'1h15','Basse / Batterie / Guitare / Clavier / Chanteur')],
  '4':[
  formula('standard','Standard Line Up',3,3000,'1h15','Batterie Electro / Claviers / Machines'),
  formula('middle','Middle Line Up',4,3500,'1h15','Batterie Electro / Claviers / Machines / Saxophone ou percussions'),
  formula('full','Full Line Up',6,4500,'1h15','Batterie Electro / Claviers / Machines / Saxophone ou Percussions / 2 chants')]
 };
+export function updateSeptemberRate(projectId,f){
+ if(!['3','5'].includes(projectId)||f.id!=='full'||f.rateRevision==='2026-09-14')return f;
+ return {...f,base:Number(f.base)===3900?3700:f.base,rateRevision:'2026-09-14'};
+}
 // Add the supplied rate card once, preserving saved project edits and later formula edits.
 export function migrateCatalog(projects){return projects.map(p=>{
  const ref=initialCatalog.find(x=>x.id===p.id);if(ref){p={...p,description:p.description===legacyDescriptions[p.id]?ref.description:p.description,source:ref.source};}
+ if(p.formulas)p={...p,formulas:p.formulas.map(f=>updateSeptemberRate(p.id,f))};
  if(!tributeFormulas[p.id]||p.formulas)return p;
- const formulas=structuredClone(tributeFormulas[p.id]);
+ const formulas=structuredClone(tributeFormulas[p.id]).map(f=>updateSeptemberRate(p.id,f));
  if(p.base!=='')formulas.push({...Object.fromEntries(['artists','base','duration','includes','perArtist','perPerson','ratio','capacity','minCars'].map(k=>[k,p[k]])),id:'custom',name:'Ancien tarif personnalisé'});
  return {...p,formulas,selectedFormula:p.base!==''?'custom':formulas[0].id,conditions:tributeConditions};
 });}

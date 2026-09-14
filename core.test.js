@@ -7,7 +7,7 @@ test('aucune donnée inventée dans une demande vide',()=>{const r=analyse('Bonj
 
 import {migrateCatalog,effectiveProject,tributeFormulas} from './catalog.js';
 test('les dix tarifs fournis et les effectifs sont exacts',()=>{
- assert.deepEqual(Object.values(tributeFormulas).flat().map(f=>[f.artists,f.base]),[[8,3900],[3,3000],[4,3500],[6,4500],[8,3900],[5,2600],[11,4400],[9,3900],[5,2600],[3,2000]]);
+ assert.deepEqual(Object.values(tributeFormulas).flat().map(f=>[f.artists,f.base]),[[8,3700],[3,3000],[4,3500],[6,4500],[8,3700],[5,2600],[11,4400],[9,3900],[5,2600],[3,2000]]);
 });
 test('migration ajoute les formules sans écraser les réglages existants',()=>{
  const original=structuredClone(initialCatalog);original[0].base=1000;original[6].base=5000;
@@ -33,7 +33,7 @@ test('sélection multiple sans doublons et migration de la formule précédente'
 });
 test('plusieurs projets : alternatives non additionnées et mode cumulé explicite',()=>{
  const s=migrateSelections({projects:migrateCatalog(initialCatalog),selections:['6:light3','3:full'],mode:'alternatives',r:{seats:3,kmRate:.6,tolls:0,meal:0,hotel:0,deposit:30},d:{km:'0'},hotels:{}});
- const options=selectedOptions(s);assert.equal(options.length,2);assert.equal(combinedTotal(options),5900);assert.match(proposal(s,options),/Option 1 — Disco Fiesta/);assert.match(proposal(s,options),/Option 2 — Cloclo/);assert.doesNotMatch(proposal(s,options),/TOTAL GÉNÉRAL/);s.mode='cumulative';assert.match(proposal(s,options),/TOTAL GÉNÉRAL HT/);
+ const options=selectedOptions(s);assert.equal(options.length,2);assert.equal(combinedTotal(options),5700);assert.match(proposal(s,options),/Option 1 — Disco Fiesta/);assert.match(proposal(s,options),/Option 2 — Cloclo/);assert.doesNotMatch(proposal(s,options),/TOTAL GÉNÉRAL/);s.mode='cumulative';assert.match(proposal(s,options),/TOTAL GÉNÉRAL HT/);
  s.hotels['6:light3']='';assert.equal(combinedTotal(selectedOptions(s)),null);s.selections=[];assert.equal(selectedOptions(s).length,0);assert.equal(combinedTotal([]),null);
 });
 
@@ -64,4 +64,10 @@ test('carburant aller-retour sans double comptage du forfait kilométrique',()=>
 test('présentation catalogue copiée dans le devis et éditable indépendamment',()=>{
  const projects=migrateCatalog(initialCatalog);projects[0]={...projects[0],description:'Résumé personnalisé catalogue'};const b=makeBlock(projects[0],{seats:3,kmRate:.6,tolls:0,meal:0},'copy');assert.equal(b.commercialText,'Résumé personnalisé catalogue');b.commercialText='Texte du devis';assert.equal(projects[0].description,'Résumé personnalisé catalogue');
  const old={...b};delete old.commercialText;old.lines=['Texte modifié','Ligne deux','Ligne trois','Ligne quatre'];const s=migrateBuilder({projects,blocks:[old],d:{},r:{}});assert.equal(s.blocks[0].commercialText,old.lines.join('\n'));
+});
+
+test('nouveaux tarifs migrent catalogue et configurations en conservant les exceptions',()=>{
+ const projects=migrateCatalog(initialCatalog);const f=projects[3].formulas[0];delete f.rateRevision;f.base=3900;
+ const migrated=migrateCatalog(projects);assert.equal(migrated[3].formulas[0].base,3700);migrated[3].formulas[0].base=3900;assert.equal(migrateCatalog(migrated)[3].formulas[0].base,3900);
+ const b=makeBlock(projects[3],{seats:3,kmRate:.6,tolls:0,meal:0,hotel:0},'rate');delete b.p.rateRevision;b.p.base=3900;b.configurations.full={p:{...b.p},fees:{...b.fees}};const s=migrateBuilder({projects,blocks:[b],d:{},r:{}});assert.equal(s.blocks[0].p.base,3700);assert.equal(s.blocks[0].configurations.full.p.base,3700);
 });
