@@ -38,7 +38,7 @@ export function updateSeptemberRate(projectId,f){
 }
 // Add the supplied rate card once, preserving saved project edits and later formula edits.
 export function migrateCatalog(projects){return projects.map(p=>{
- const ref=initialCatalog.find(x=>x.id===p.id);if(ref){p={...p,description:p.description===legacyDescriptions[p.id]?ref.description:p.description,source:ref.source};}
+ const ref=initialCatalog.find(x=>x.id===p.id);if(ref){p=populateVideos(p,ref);p={...p,description:p.description===legacyDescriptions[p.id]?ref.description:p.description,source:ref.source};}
  if(p.formulas)p={...p,formulas:p.formulas.map(f=>updateSeptemberRate(p.id,f))};
  if(!tributeFormulas[p.id]||p.formulas)return p;
  const formulas=structuredClone(tributeFormulas[p.id]).map(f=>updateSeptemberRate(p.id,f));
@@ -66,3 +66,13 @@ const summaries=[
 ];
 const pageSlugs=['samba-experience','body-groove-experience','the-songwriting-experience','disco-fiesta','sonic-drift','circus','cloclo','durbaan','battledrum-galactica','les-perturbatteurs','dial-show-orchestra','karaoke-live-be-a-star','velvet-cocktail'];
 initialCatalog.forEach((p,i)=>{p.description=summaries[i];p.source='https://music-concept.fr/'+pageSlugs[i]+'/';});
+
+// Video links extracted from the project pages on 2026-09-14.
+const siteVideos={"0": ["https://www.youtube.com/watch?v=_UZPemF9Cos", "https://www.youtube.com/watch?v=-9rM09x_br0", "https://www.youtube.com/watch?v=Pxq_ef5UZXc", "https://www.youtube.com/watch?v=8rRuTqw5wEU"], "1": ["https://www.youtube.com/watch?v=rjS8XaOqqn0"], "2": ["https://www.youtube.com/watch?v=anqR1Iy-DNI"], "3": ["https://www.youtube.com/watch?v=1I-nYxvkE0k", "https://www.youtube.com/watch?v=tDxcvhjYtg4", "https://www.youtube.com/watch?v=F6spZ6ELqk4", "https://www.youtube.com/watch?v=wWlTATJ08TU", "https://www.youtube.com/watch?v=kpresNgLtz8"], "4": ["https://www.youtube.com/watch?v=WKY9s_11Y84"], "5": ["https://www.youtube.com/watch?v=tIbmxCLtuyU"], "6": ["https://www.youtube.com/watch?v=ukMeWdpyDJg", "https://www.youtube.com/watch?v=oa2pA4068ek", "https://www.youtube.com/watch?v=Oy97WoOjQVA", "https://www.youtube.com/watch?v=h9peHLsfmjc", "https://www.youtube.com/watch?v=7gZZxI7fK00"], "7": ["https://www.youtube.com/watch?v=j39RHArH1rA"], "8": ["https://www.youtube.com/watch?v=VDCXVZ3Cs4c", "https://www.youtube.com/watch?v=PePCR-vZMM0", "https://www.youtube.com/watch?v=RdIKwLq2IcA", "https://www.youtube.com/watch?v=VZnTe5-AXBY"], "9": ["https://www.youtube.com/watch?v=Fe5hTpDxHWo", "https://www.youtube.com/watch?v=WKBdHBvN8T4"], "10": ["https://www.youtube.com/watch?v=9yEUKeKbAM8", "https://www.youtube.com/watch?v=OZNuPWEMm4k"], "11": [], "12": []};
+initialCatalog.forEach(p=>{p.videos=siteVideos[p.id].join("\n");});
+export function populateVideos(p,ref){
+ if(p.videosRevision==='2026-09-14')return p;
+ const links=[...(p.videos||'').split(/\n/),...(ref.videos||'').split(/\n/)].map(x=>x.trim()).filter(Boolean);
+ const seen=new Set();const unique=links.filter(url=>{const id=url.match(/(?:[?&]v=|youtu\.be\/|embed\/)([\w-]{11})/)?.[1]||url;if(seen.has(id))return false;seen.add(id);return true;});
+ return {...p,videos:unique.join('\n'),videosRevision:'2026-09-14'};
+}
