@@ -52,3 +52,11 @@ test('blocs répétés, quatre lignes et informations communes une seule fois',(
  const name=text.indexOf('Option 1 —');assert.deepEqual(text.slice(name).split('\n').slice(1,5),s.blocks[0].lines);
  s.blocks=[];assert.equal(selectedOptions(s).length,0);
 });
+
+import {fuelCost} from './builder.js';
+test('carburant aller-retour sans double comptage du forfait kilométrique',()=>{
+ assert.equal(fuelCost(100,2,7,1.8),50.4);assert.equal(fuelCost(100,0,'',''),0);assert.equal(fuelCost(100,1,'',1.8),null);
+ const r={seats:3,kmRate:.6,tolls:0,meal:0,hotel:0,deposit:30};const b=makeBlock(migrateCatalog(initialCatalog)[6],r,'fuel');
+ b.fees={...b.fees,fuelMode:'fuel',cars:2,trucks:1,carConsumption:7,truckConsumption:10,fuelPrice:1.8,tolls:20,truckTolls:30,truckRental:100};
+ const c=blockCost(b,{km:'100'},r);assert.equal(c.carCost,90.4);assert.equal(c.truckCost,166);assert.equal(c.total,4656.4);
+});

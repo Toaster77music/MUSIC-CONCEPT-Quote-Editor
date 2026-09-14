@@ -27,15 +27,23 @@ export function switchFormula(b,project,id){
  b.formulaId=id;const saved=b.configurations[id];
  if(saved){b.p=structuredClone(saved.p);b.fees=structuredClone(saved.fees);}else{b.p=structuredClone(effectiveProject({...project,selectedFormula:id}));b.fees={...b.fees,cars:'',trucks:0,truckRental:0,truckKmRate:0,truckTolls:0};}
 }
+export function fuelCost(km,count,consumption,price){
+ if(Number(count)===0)return 0;
+ if(km===null||consumption===undefined||consumption===''||price===undefined||price==='')return null;
+ return Math.round(km*2*Number(count)*Number(consumption)/100*Number(price)*100)/100;
+}
 export function blockCost(b,d,r){
  const basic=calculate(b.p,d,{...r,...b.fees,hotel:0});
  const cars=b.fees.cars===''?basic.cars:Number(b.fees.cars),trucks=Number(b.fees.trucks)||0;
  const km=d.km===''?null:Number(d.km),f=b.fees;
  const round=n=>Math.round(n*100)/100;
- const carCost=km===null&&cars>0?null:round((km||0)*2*cars*Number(f.kmRate)+cars*Number(f.tolls));
- const truckCost=trucks===0?0:km===null&&Number(f.truckKmRate)>0?null:round(trucks*(Number(f.truckRental)+(km||0)*2*Number(f.truckKmRate)+Number(f.truckTolls)));
+ const carFuel=fuelCost(km,cars,f.carConsumption,f.fuelPrice),truckFuel=fuelCost(km,trucks,f.truckConsumption,f.fuelPrice);
+ const carTravel=f.fuelMode==='fuel'?carFuel:km===null&&cars>0?null:round((km||0)*2*cars*Number(f.kmRate));
+ const carCost=carTravel===null?null:round(carTravel+cars*Number(f.tolls));
+ const truckTravel=f.fuelMode==='fuel'?truckFuel:km===null&&trucks>0&&Number(f.truckKmRate)>0?null:round(trucks*(km||0)*2*Number(f.truckKmRate));
+ const truckCost=truckTravel===null?null:round(truckTravel+trucks*(Number(f.truckRental)+Number(f.truckTolls)));
  const meals=round(basic.artists*Number(f.meal));const hotel=f.hotel===''?null:Number(f.hotel);
  const travel=carCost===null||truckCost===null||hotel===null?null:round(carCost+truckCost+meals+hotel);
  const total=basic.fee===null||travel===null?null:round(basic.fee+travel);
- return {...basic,cars,trucks,carCost,truckCost,meals,hotel,travel,total,deposit:total===null?null:round(total*Number(r.deposit)/100)};
+ return {...basic,cars,trucks,carFuel,truckFuel,carCost,truckCost,meals,hotel,travel,total,deposit:total===null?null:round(total*Number(r.deposit)/100)};
 }
