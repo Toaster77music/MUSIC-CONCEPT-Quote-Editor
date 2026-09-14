@@ -49,7 +49,7 @@ test('blocs répétés, quatre lignes et informations communes une seule fois',(
  s.blocks.push({...structuredClone(s.blocks[0]),uid:'duplicate'});assert.equal(selectedOptions(s).length,3);
  s.blocks[0].show.travel=false;s.commonShow.client=false;
  const text=proposal(s,selectedOptions(s));assert.equal(text.split('Lieu Test').length-1,1);assert.equal(text.split('Accès camion limité').length-1,1);assert.doesNotMatch(text,/Test Client/);
- const name=text.indexOf('Option 1 —');assert.deepEqual(text.slice(name).split('\n').slice(1,5),s.blocks[0].lines);
+ const name=text.indexOf('Option 1 —');assert.equal(text.slice(name).split('\n')[1],s.blocks[0].commercialText);
  s.blocks=[];assert.equal(selectedOptions(s).length,0);
 });
 
@@ -59,4 +59,9 @@ test('carburant aller-retour sans double comptage du forfait kilométrique',()=>
  const r={seats:3,kmRate:.6,tolls:0,meal:0,hotel:0,deposit:30};const b=makeBlock(migrateCatalog(initialCatalog)[6],r,'fuel');
  b.fees={...b.fees,fuelMode:'fuel',cars:2,trucks:1,carConsumption:7,truckConsumption:10,fuelPrice:1.8,tolls:20,truckTolls:30,truckRental:100};
  const c=blockCost(b,{km:'100'},r);assert.equal(c.carCost,90.4);assert.equal(c.truckCost,166);assert.equal(c.total,4656.4);
+});
+
+test('présentation catalogue copiée dans le devis et éditable indépendamment',()=>{
+ const projects=migrateCatalog(initialCatalog);projects[0]={...projects[0],description:'Résumé personnalisé catalogue'};const b=makeBlock(projects[0],{seats:3,kmRate:.6,tolls:0,meal:0},'copy');assert.equal(b.commercialText,'Résumé personnalisé catalogue');b.commercialText='Texte du devis';assert.equal(projects[0].description,'Résumé personnalisé catalogue');
+ const old={...b};delete old.commercialText;old.lines=['Texte modifié','Ligne deux','Ligne trois','Ligne quatre'];const s=migrateBuilder({projects,blocks:[old],d:{},r:{}});assert.equal(s.blocks[0].commercialText,old.lines.join('\n'));
 });

@@ -49,3 +49,6 @@ Les anciennes sélections sont migrées en blocs en conservant les paramètres e
 
 ## Carburant et aller-retour
 La distance aller reste saisie une seule fois ; l’interface affiche explicitement l’aller-retour (distance × 2) par véhicule. Chaque bloc peut choisir le forfait kilométrique ou le carburant estimé : km aller × 2 × véhicules × consommation L/100 km ÷ 100 × prix €/L. Le carburant remplace le forfait/km, il ne s’y ajoute pas. Consommations et prix sont saisis par l’utilisateur, sans récupération des prix à la pompe. Location et péages sont ajoutés séparément. Les péages A/R restent manuels : OSRM ne fournit pas de tarifs. Une future intégration tarifaire nécessitera un fournisseur et un backend protégeant sa clé.
+
+## Présentation commerciale unique
+Depuis le 14 septembre 2026, la présentation est un champ de texte multiligne unique dans le catalogue et dans chaque bloc du devis. Les 13 résumés proviennent des pages artistes liées dans le catalogue. Les anciens textes par défaut sont actualisés ; les descriptions personnalisées restent conservées. À l’ajout d’un bloc, le texte du catalogue est copié et reste éditable indépendamment dans le devis. Les quatre anciennes lignes personnalisées sont réunies dans ce champ, sans perte de contenu. Le choix de configuration ne remplace pas ce texte.
