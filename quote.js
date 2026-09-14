@@ -29,7 +29,7 @@ export function proposal(state,options){
 function builderProposal(state,options){
  const sections=options.map((o,i)=>{const {b,p,c}=o,show=b.show;
  const text=[`${state.mode==='cumulative'?'Prestation':'Option'} ${i+1} — ${b.name}`,b.commercialText?.trim()||'Présentation commerciale à compléter.'];
- if(p.formulaName)text.push('','Configuration : '+p.formulaName);
+ if(p.formulaName)text.push('','Line up : '+p.formulaName);
  if(show.duration)text.push('Durée proposée : '+p.duration);
  if(show.includes)text.push('Composition / inclus : '+p.includes);
  if(show.artists)text.push('Effectif : '+(c.artists||'à préciser')+' artiste(s)');

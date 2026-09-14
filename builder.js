@@ -17,16 +17,26 @@ const lines={
  '11':['Vos invités deviennent les chanteurs d’un groupe live.','Des musiciens les accompagnent sur scène.','Les paroles à l’écran facilitent leur participation.','Une expérience musicale collective dans une ambiance de concert.'],
  '12':['Une animation musicale live pour cocktails et réceptions.','Une ambiance élégante accompagne les échanges entre invités.','Le projet privilégie une atmosphère chaleureuse et raffinée.','La formation est modulable selon le format de votre réception.']};
 export function presentation(p){return [...(lines[p.id]||[p.description||'Présentation du projet à compléter.','Univers musical à préciser.','Déroulement de la prestation à préciser.','Adaptation à votre événement à préciser.'])];}
-export function makeBlock(p,r,uid){return {uid,projectId:p.id,name:p.name,formulaId:p.selectedFormula||p.formulas?.[0]?.id||'',p:structuredClone(effectiveProject(p)),commercialText:p.description,lines:presentation(p),show:{...displayDefaults},fees:{cars:'',seats:r.seats,kmRate:r.kmRate,tolls:r.tolls,meal:r.meal,hotel:p.formulas?r.hotel??'':0,trucks:0,truckRental:0,truckKmRate:0,truckTolls:0},configurations:{}};}
+export const lineUps=p=>(p.formulas||[]).filter(f=>f.id!=='custom'&&f.name!=='Ancien tarif personnalisé');
+export function syncCatalogFields(b,project){
+ if(!project)return;
+ const available=lineUps(project);
+ if(available.length&&!available.some(f=>f.id===b.formulaId)){b.formulaId=available[0].id;b.p=structuredClone(effectiveProject({...project,selectedFormula:b.formulaId}));}
+ const sync=(target,id)=>{const source=effectiveProject({...project,selectedFormula:id});target.catalogOverrides??={};for(const k of ['duration','includes'])if(!target.catalogOverrides[k])target.p[k]=source[k];};
+ sync(b,b.formulaId);for(const [id,c] of Object.entries(b.configurations||{}))sync(c,id);
+}
+export function makeBlock(p,r,uid){if(lineUps(p).length&&!lineUps(p).some(f=>f.id===p.selectedFormula))p={...p,selectedFormula:lineUps(p)[0].id};return {uid,projectId:p.id,name:p.name,formulaId:p.selectedFormula||p.formulas?.[0]?.id||'',p:structuredClone(effectiveProject(p)),commercialText:p.description,lines:presentation(p),show:{...displayDefaults},fees:{cars:'',seats:r.seats,kmRate:r.kmRate,tolls:r.tolls,meal:r.meal,hotel:p.formulas?r.hotel??'':0,trucks:0,truckRental:0,truckKmRate:0,truckTolls:0},configurations:{}};}
 export function migrateBuilder(s){
  if(!Array.isArray(s.blocks))s.blocks=s.projects.flatMap(p=>(p.formulas||[null]).flatMap(f=>{const key=p.id+':'+(f?.id||'');if(!s.selections?.includes(key))return [];const b=makeBlock(f?{...p,selectedFormula:f.id}:p,s.r,'legacy-'+key);b.fees.hotel=s.hotels?.[key]??b.fees.hotel;return [b];}));
  for(const b of s.blocks){if(b.p){const upgraded=updateSeptemberRate(b.projectId,{...b.p,id:b.formulaId});b.p={...upgraded,id:b.p.id};}for(const [id,config] of Object.entries(b.configurations||{})){if(config.p){const upgraded=updateSeptemberRate(b.projectId,{...config.p,id});config.p={...upgraded,id:config.p.id};}}if(typeof b.commercialText!=='string'){const original=presentation({id:b.projectId,description:b.p?.description});const unchanged=JSON.stringify(b.lines)===JSON.stringify(original);b.commercialText=unchanged?(s.projects.find(p=>p.id===b.projectId)?.description||b.p?.description||''):(b.lines||[]).join('\n');}}
+ for(const b of s.blocks)syncCatalogFields(b,s.projects.find(p=>p.id===b.projectId));
  s.commonShow={...Object.fromEntries(Object.keys(commonLabels).map(k=>[k,true])),...s.commonShow};s.d.constraints??='';return s;
 }
 export function switchFormula(b,project,id){
- b.configurations[b.formulaId]={p:structuredClone(b.p),fees:structuredClone(b.fees)};
+ b.configurations[b.formulaId]={p:structuredClone(b.p),fees:structuredClone(b.fees),catalogOverrides:{...b.catalogOverrides}};
  b.formulaId=id;const saved=b.configurations[id];
- if(saved){b.p=structuredClone(saved.p);b.fees=structuredClone(saved.fees);}else{b.p=structuredClone(effectiveProject({...project,selectedFormula:id}));b.fees={...b.fees,cars:'',trucks:0,truckRental:0,truckKmRate:0,truckTolls:0};}
+ if(saved){b.p=structuredClone(saved.p);b.fees=structuredClone(saved.fees);b.catalogOverrides={...saved.catalogOverrides};}else{b.catalogOverrides={};b.p=structuredClone(effectiveProject({...project,selectedFormula:id}));b.fees={...b.fees,cars:'',trucks:0,truckRental:0,truckKmRate:0,truckTolls:0};}
+ syncCatalogFields(b,project);
 }
 export function fuelCost(km,count,consumption,price){
  if(Number(count)===0)return 0;
